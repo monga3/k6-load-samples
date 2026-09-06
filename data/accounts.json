@@ -1,0 +1,15 @@
+{
+  "_comment": "テストデータ。k6公式の Data parameterization は JSON を第一に示しており、パーサ不要で JSON.parse(open()) だけで読める。別のファイルを使う場合は --env DATA_FILE=... を付ける。",
+  "accounts": [
+    { "id": "acct-001", "username": "default", "password": "12345678" },
+    { "id": "acct-002", "username": "default", "password": "12345678" },
+    { "id": "acct-003", "username": "default", "password": "12345678" },
+    { "id": "acct-004", "username": "default", "password": "12345678" },
+    { "id": "acct-005", "username": "default", "password": "12345678" },
+    { "id": "acct-006", "username": "default", "password": "12345678" },
+    { "id": "acct-007", "username": "default", "password": "12345678" },
+    { "id": "acct-008", "username": "default", "password": "12345678" },
+    { "id": "acct-009", "username": "default", "password": "12345678" },
+    { "id": "acct-010", "username": "default", "password": "12345678" }
+  ]
+}

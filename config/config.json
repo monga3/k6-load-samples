@@ -1,0 +1,70 @@
+{
+  "activeEnvironment": "public",
+
+  "environments": {
+    "public": {
+      "description": "Grafana の公開デモ QuickPizza のみ。Docker もモックも不要でそのまま動く（疎通確認用。負荷はかけないこと）",
+      "apiBaseUrl": "https://quickpizza.grafana.com",
+      "files": {
+        "baseUrl": "https://quickpizza.grafana.com",
+        "style": "echo",
+        "uploadPath": "/api/post",
+        "downloadPath": "/api/bytes/{bytes}"
+      },
+      "update": { "verifyMode": "create-only" }
+    }
+  },
+
+  "load": {
+    "executor": "ramping-vus",
+    "stages": [
+      { "duration": "10s", "target": 5 },
+      { "duration": "30s", "target": 5 },
+      { "duration": "5s", "target": 0 }
+    ],
+    "gracefulStop": "10s",
+    "thinkTimeSeconds": [0.5, 1.5]
+  },
+
+  "steps": {
+    "login": { "enabled": true },
+    "upload": {
+      "enabled": true,
+      "filename": "accounts_upload.csv",
+      "_contentMarker": "アップロードしたファイルに必ず含まれる文字列。エコー方式のサーバで中身が届いたかの確認に使う（UPLOAD_FILE を差し替えるならここも変える）",
+      "contentMarker": "record_id,account_id"
+    },
+    "fetch": { "enabled": true, "expectMinItems": 1 },
+    "update": { "enabled": true, "stars": 3, "updatedStars": 5, "cleanup": true },
+    "download": { "enabled": true, "bytes": 262144 }
+  },
+
+  "checks": {
+    "maxDurationMs": {
+      "login": 3000,
+      "upload": 5000,
+      "fetch": 3000,
+      "update": 5000,
+      "download": 10000
+    }
+  },
+
+  "_thresholds_note": "checks は全ステップを合算した成功率なので、1ステップだけ失敗しても薄まる。ステップ単位で見たいものは checks{group:::NN_name} のようにグループタグで絞る。存在しないグループ名を書いても対象0件で黙って通るため、追加したら一度わざと落として ✗ が出ることを確認すること。",
+
+  "thresholds": {
+    "http_req_failed": ["rate<0.01"],
+    "checks": ["rate>0.99"],
+    "checks{group:::04_update}": ["rate>0.99"],
+    "group_duration{group:::04_update}": ["p(95)<3000"],
+    "step_login": ["p(95)<2000"],
+    "step_upload": ["p(95)<3000"],
+    "step_fetch": ["p(95)<2000"],
+    "step_update": ["p(95)<3000"],
+    "step_download": ["p(95)<5000"]
+  },
+
+  "report": {
+    "dir": "reports",
+    "title": "k6 サンプル負荷テスト"
+  }
+}
