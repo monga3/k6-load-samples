@@ -16,8 +16,8 @@
 **このサンプルは k6 v1.x 前提**（v1.7.1 で動作確認）。パッケージマネージャで入れると最新版が入るので、揃えたい場合は [GitHub Releases](https://github.com/grafana/k6/releases/tag/v1.7.1) からバイナリを落とす。展開して出てくる実行ファイル1つで動くので、既存の k6 と共存できる。
 
 ```sh
-git clone https://github.com/<アカウント名>/k6-load-test-sample.git
-cd k6-load-test-sample
+git clone https://github.com/monga3/k6-load-samples.git
+cd k6-load-samples
 
 # 疎通確認: 1VU × 1反復で全ステップの check が通るか見る
 k6 run scenarios/smoke.js
@@ -34,15 +34,17 @@ k6 run scenarios/smoke.js
 
 ---
 
-## 接続先を選ぶ
+## 接続先
 
-`config/config.json` の `activeEnvironment`、または `--env ENVIRONMENT=...` で切り替える。
+このサンプルの既定設定は、[公開デモ QuickPizza](https://quickpizza.grafana.com) を使う構成です。`config/config.json` の `activeEnvironment`、または `--env ENVIRONMENT=...` で切り替えられます。
 
-| 環境 | 向き先 | 起動が必要なもの | 更新ステップ | 用途 |
-|---|---|---|---|---|
-| `public`（既定） | [公開デモ QuickPizza](https://quickpizza.grafana.com) | **なし** | 登録のみ | クローンして即動く。疎通確認向け。**負荷はかけない** |
+| 環境 | 向き先 | 使い方 |
+|---|---|---|
+| `public`（既定） | [公開デモ QuickPizza](https://quickpizza.grafana.com) | クローンしてすぐ動く。疎通確認向け。**負荷はかけない** |
 
 5ステップすべてが公開デモ API で完結する。Docker は不要。
+
+> `UPDATE_VERIFY_MODE=patch` は、ローカルで起動した QuickPizza かつ `default` 以外のユーザーで利用できる更新検証モードです。公開インスタンスでは `default` ユーザーの `PATCH` / `DELETE` が禁止されるため、`public` では `create-only` を使う前提です。
 
 ### QuickPizza で使っているエンドポイント
 
@@ -92,6 +94,12 @@ k6 run scenarios/smoke.js
 
 対応している executor: `shared-iterations` / `per-vu-iterations` / `constant-vus` / `ramping-vus` / `constant-arrival-rate` / `ramping-arrival-rate`。
 
+### 設定ファイルの補足
+
+`config/config.json` の `checks.maxDurationMs` は、各ステップの 1 リクエストあたりの実行時間上限で、`thresholds` の `p(95)` などとは役割が違う。前者は個別の `check()` のタイムアウト相当で、後者は集計結果の合否判定に使う。
+
+`report` は出力先ディレクトリと HTML の題名を定義する。ファイルの書き出し先は `reports/` で、`handleSummary()` がここへ HTML/JSON を生成する。
+
 ### しきい値
 
 満たさないと **k6 の終了コードが 0 以外になる**（CI はこれを見るので、そのままジョブの合否になる）。
@@ -138,6 +146,8 @@ k6 run scenarios/smoke.js
 
 ### テストデータ
 
+個人用の上書き設定は `config/config.local.json.example` をコピーして `config/config.local.json` を作成すると簡単。`config.js` がこのファイルを自動読込するので、共有したくない接続先や閾値だけを差し替えられる。
+
 アカウント一覧は init コンテキストで1回だけ読み、`SharedArray` で全VUに共有する。VU への割り当ては `k6/execution` の `vu.idInTest` を剰余で回す。
 
 形式は **JSON**。k6公式の Data parameterization は JSON を第一に示していて、`JSON.parse(open())` だけで読めるためパーサが不要になる。CSV を読むには Papa Parse などの外部ライブラリが要る。
@@ -163,6 +173,8 @@ k6 run --env DATA_FILE=../data/accounts_staging.json scenarios/load.js
 | `UPLOAD_FILE` | アップロードするファイルのパス |
 | `DATA_FILE` | アカウント一覧のJSONファイル |
 
+> `UPDATE_VERIFY_MODE=patch` は `public` では使わないこと。公開デモの `default` ユーザーは `PATCH` / `DELETE` が禁止されており、`public` の更新ステップは `create-only` を前提にしている。ローカル QuickPizza と `default` 以外のユーザーでのみ有効。
+
 ```sh
 k6 run --env VUS=20 --env DURATION=3m scenarios/load.js
 ```
@@ -175,7 +187,7 @@ k6 run --env VUS=20 --env DURATION=3m scenarios/load.js
 .
 ├── config/
 │   ├── config.json         # 環境・負荷モデル・しきい値・ステップ設定
-│   ├── config.js           # ローダ（SharedArray で1回だけ読む / __ENV 上書き）
+│   └── config.js           # ローダ（SharedArray で1回だけ読む / __ENV 上書き）
 ├── lib/
 │   ├── options.js          # config.json → options.scenarios / thresholds
 │   ├── checks.js           # 再利用する check 部品（8個）

@@ -1,3 +1,6 @@
 reports/*.html
 reports/*.json
 !reports/.gitkeep
+
+config.local.json
+config/config.local.json

@@ -4,7 +4,8 @@
  * - config.json を SharedArray で「1回だけ」読み、全VUで共有する
  *   （open() は init コンテキストでしか呼べない。VU ごとに読み直すと VU の数だけ
  *    メモリと起動時間を無駄にする）
- * - config.local.json があれば上書き（gitignore 済み。個人の環境差はこちらへ）
+ * - config.local.json / config/config.local.json があれば上書き
+ *   （個人用の環境差はここへ置く。gitignore で除外する）
  * - さらに環境変数（--env KEY=VALUE）で上書き。CI から差し込む用
  */
 import { SharedArray } from "k6/data";
@@ -23,11 +24,20 @@ function deepMerge(base, override) {
 }
 
 function loadOptionalLocalConfig() {
-  try {
-    return JSON.parse(open("./config.local.json"));
-  } catch (_e) {
-    return {}; // 無くても良いファイル
+  const candidatePaths = [
+    "./config.local.json",
+    "./config/config.local.json"
+  ];
+
+  for (const candidatePath of candidatePaths) {
+    try {
+      return JSON.parse(open(candidatePath));
+    } catch (_e) {
+      // どちらも無ければ何もしない
+    }
   }
+
+  return {};
 }
 
 /** 数値の環境変数を安全に読む */
@@ -62,7 +72,8 @@ export const CONFIG = {
   apiBaseUrl: (__ENV.API_BASE_URL || environment.apiBaseUrl).replace(/\/+$/, ""),
   /**
    * ファイルAPIの設定。
-  * style: "echo" … リクエスト本文をそのまま返す（QuickPizza の /api/post）
+   * style: "echo" … リクエスト本文をそのまま返す（QuickPizza の /api/post）
+   *        "json" … {filename, receivedBytes} を返すサーバ（バイト数まで突き合わせる）
    */
   files: {
     baseUrl: (__ENV.FILE_BASE_URL || environment.files.baseUrl).replace(/\/+$/, ""),

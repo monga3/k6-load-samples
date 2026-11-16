@@ -32,7 +32,7 @@ export default function uploadFile(config, token, fileData) {
 
   const payload = {
     // 通常のフォームフィールドも同時に送れる
-    source: "k6-load-test-sample",
+    source: "k6-load-samples",
     file: http.file(fileData, filename, "text/csv")
   };
 

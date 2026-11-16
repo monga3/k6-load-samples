@@ -1,0 +1,15 @@
+{
+  "activeEnvironment": "public",
+  "checks": {
+    "maxDurationMs": {
+      "login": 3000,
+      "upload": 5000,
+      "fetch": 3000,
+      "update": 5000,
+      "download": 10000
+    }
+  },
+  "report": {
+    "title": "Local k6 sample report"
+  }
+}

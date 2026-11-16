@@ -20,7 +20,7 @@ import { recordResponse } from "../lib/metrics.js";
  */
 export default function downloadReport(config, token) {
   const bytes = config.steps.download.bytes;
-  // パスは環境ごとに違うのでテンプレートから組む
+  // 接続先を差し替えたときにパスも変えられるよう、テンプレートから組む
   const path = config.files.downloadPath.replace("{bytes}", String(bytes));
   const url = `${config.files.baseUrl}${path}`;
 
